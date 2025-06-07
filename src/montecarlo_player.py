@@ -8,7 +8,7 @@ class MonteCarloPlayer(BasePokerPlayer):
         # 勝率模擬
         win_rate = self.estimate_hole_card_win_rate(
             nb_simulation=300,
-            nb_player=2,
+            nb_player=len(round_state['seats']),
             hole_card=hole_card,
             community_card=round_state["community_card"]
         )
