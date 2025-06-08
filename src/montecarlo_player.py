@@ -2,6 +2,7 @@ from game.players import BasePokerPlayer
 from game.engine.card import Card
 from game.engine.hand_evaluator import HandEvaluator
 import random
+import pprint
 
 class MonteCarloPlayer(BasePokerPlayer):
     def declare_action(self, valid_actions, hole_card, round_state):
@@ -12,7 +13,8 @@ class MonteCarloPlayer(BasePokerPlayer):
             hole_card=hole_card,
             community_card=round_state["community_card"]
         )
-        
+        pprint.pprint(round_state)
+        print(f"Estimated Win Rate: {win_rate:.2f}")
         call_cost = round_state['call_amount']
         pot = round_state['pot']
         print(f"Win Rate: {win_rate:.2f}, Call Cost: {call_cost}, Pot: {pot}")
@@ -63,6 +65,7 @@ class MonteCarloPlayer(BasePokerPlayer):
             else:
                 action = valid_actions[1]
                 amount = action["amount"]
+        return action["action"], amount
 
     def estimate_hole_card_win_rate(self, nb_simulation, nb_player, hole_card, community_card=None):
         if community_card is None:
