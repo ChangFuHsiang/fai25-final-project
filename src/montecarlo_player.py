@@ -7,22 +7,22 @@ class MonteCarloPlayer(BasePokerPlayer):
     def declare_action(self, valid_actions, hole_card, round_state):
         # 勝率模擬
         win_rate = self.estimate_hole_card_win_rate(
-            nb_simulation=500,
+            nb_simulation=300,
             nb_player=len(round_state['seats']),
             hole_card=hole_card,
             community_card=round_state["community_card"]
         )
-        print(f"Estimated Win Rate: {win_rate:.2f}")
+        
         call_cost = round_state['call_amount']
         pot = round_state['pot']
-
+        print(f"Win Rate: {win_rate:.2f}, Call Cost: {call_cost}, Pot: {pot}")
         if call_cost == 0:
             pot_odds = 0.0001
         else:
             pot_odds = call_cost / (pot + call_cost)
 
         RR = win_rate / pot_odds
-
+        print(f"RR: {RR:.2f} (Win Rate / Pot Odds)")
         # 合法下注上下限
         min_raise = valid_actions[2]["amount"]["min"]
         max_raise = valid_actions[2]["amount"]["max"]
@@ -38,8 +38,6 @@ class MonteCarloPlayer(BasePokerPlayer):
 
         # 篩選合法的 raise amount（避免超出合法範圍）
         legal_raise_sizes = [amt for amt in raise_sizes if min_raise <= amt <= max_raise]
-
-        print(f"RR: {RR:.2f}, Win Rate: {win_rate:.2f}, Pot Odds: {pot_odds:.2f}, Call Cost: {call_cost}, Pot: {pot}")
         # 決策邏輯
         if RR < 0.8:
             action = valid_actions[0]  # fold
