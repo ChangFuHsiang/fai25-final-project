@@ -64,29 +64,25 @@ class MonteCarloPlayer(BasePokerPlayer):
         legal_raise_sizes = [amt for amt in raise_sizes if min_raise <= amt <= max_raise]
         # 決策邏輯
         if RR < 0.8:
-            action = valid_actions[0]  # fold
-            amount = action["amount"]
-        elif 0.8 <= RR < 1.0:
-            if random.random() < 0.15 and legal_raise_sizes:
-                action = valid_actions[2]  # bluff raise
-                amount = legal_raise_sizes[0]  # 使用最小的 raise（例如0.25 pot）
+            if random.random() < 0.15:
+                action = 'raise'
+                amount = valid_actions[2]['amount']['min']
             else:
-                action = valid_actions[0]  # fold
-                amount = action["amount"]
-        elif 1.0 <= RR < 1.3:
-            if random.random() < 0.4 and legal_raise_sizes:
-                action = valid_actions[2]
-                amount = legal_raise_sizes[len(legal_raise_sizes)//2]  # 選中間金額
-            else:
-                action = valid_actions[1]  # call
-                amount = action["amount"]
+                action = 'fold'
+
+        elif 0.8 <= RR < 1.3:
+            action = 'call'
+
+        elif 1.3 <= RR < 2.0:
+            action = 'raise'
+            amount = valid_actions[2]['amount']['min'] + 20
+
         else:
-            if random.random() < 0.7 and legal_raise_sizes:
-                action = valid_actions[2]
-                amount = legal_raise_sizes[-1]  # 選最大的合法 raise（max 或 all-in）
+            if win_rate > 0.75:
+                action = 'raise'
+                amount = valid_actions[2]['amount']['max']
             else:
-                action = valid_actions[1]
-                amount = action["amount"]
+                action = 'call'
         return action["action"], amount
 
     def estimate_hole_card_win_rate(self, nb_simulation, nb_player, hole_card, community_card=None):
