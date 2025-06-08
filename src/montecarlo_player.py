@@ -6,7 +6,8 @@ import pprint
 
 class MonteCarloPlayer(BasePokerPlayer):
     def declare_action(self, valid_actions, hole_card, round_state):
-        # 勝率模擬
+        # valid_actions  => [fold, call, raise]
+
         win_rate = self.estimate_hole_card_win_rate(
             nb_simulation=300,
             nb_player=len(round_state['seats']),
@@ -62,28 +63,44 @@ class MonteCarloPlayer(BasePokerPlayer):
 
         # 篩選合法的 raise amount（避免超出合法範圍）
         legal_raise_sizes = [amt for amt in raise_sizes if min_raise <= amt <= max_raise]
-        # 決策邏輯
+
+
+        action_info = valid_actions[0]  # fold
+        action = action_info['action']
+        amount = action_info['amount']
+
         if RR < 0.8:
             if random.random() < 0.15:
-                action = 'raise'
-                amount = valid_actions[2]['amount']['min']
+                action_info = valid_actions[2]  # raise
+                action = action_info['action']
+                amount = action_info['amount']['min']
             else:
-                action = 'fold'
+                action_info = valid_actions[0]  # fold
+                action = action_info['action']
+                amount = action_info['amount']
 
         elif 0.8 <= RR < 1.3:
-            action = 'call'
+            action_info = valid_actions[1]  # call
+            action = action_info['action']
+            amount = action_info['amount']
 
         elif 1.3 <= RR < 2.0:
-            action = 'raise'
-            amount = valid_actions[2]['amount']['min'] + 20
+            action_info = valid_actions[2]  # raise
+            action = action_info['action']
+            amount = action_info['amount']['min'] + 20
 
         else:
             if win_rate > 0.75:
-                action = 'raise'
-                amount = valid_actions[2]['amount']['max']
+                action_info = valid_actions[2]  # raise
+                action = action_info['action']
+                amount = action_info['amount']['max']
             else:
-                action = 'call'
-        return action["action"], amount
+                action_info = valid_actions[1]  # call
+                action = action_info['action']
+                amount = action_info['amount']
+
+        print(f"Action: {action}, Amount: {amount}")
+        return action, amount
 
     def estimate_hole_card_win_rate(self, nb_simulation, nb_player, hole_card, community_card=None):
         if community_card is None:
