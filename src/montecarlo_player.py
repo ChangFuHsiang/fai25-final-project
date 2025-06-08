@@ -13,11 +13,33 @@ class MonteCarloPlayer(BasePokerPlayer):
             hole_card=hole_card,
             community_card=round_state["community_card"]
         )
-        pprint.pprint(round_state)
         print(f"Estimated Win Rate: {win_rate:.2f}")
-        call_cost = round_state['call_amount']
-        pot = round_state['pot']
+
+        # 計算 pot
+        pot = round_state["pot"]["main"]["amount"] + sum(p["amount"] for p in round_state["pot"]["side"])
+
+        # 計算 call_cost
+        street = round_state["street"]
+        action_history = round_state["action_histories"].get(street, [])
+        my_uuid = self.uuid
+
+        max_paid = 0
+        my_paid = 0
+        for act in action_history:
+            if "paid" in act:
+                max_paid = max(max_paid, act["paid"])
+            elif "amount" in act:
+                max_paid = max(max_paid, act["amount"])
+            if act["uuid"] == my_uuid:
+                if "paid" in act:
+                    my_paid += act["paid"]
+                elif "amount" in act:
+                    my_paid += act["amount"]
+
+        call_cost = max(0, max_paid - my_paid)
+
         print(f"Win Rate: {win_rate:.2f}, Call Cost: {call_cost}, Pot: {pot}")
+
         if call_cost == 0:
             pot_odds = 0.0001
         else:
