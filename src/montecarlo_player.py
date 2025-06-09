@@ -31,7 +31,7 @@ class MonteCarloPlayer(BasePokerPlayer):
                 self.order = 1
             self.modify = 1
 
-        print(f"[DEBUG] Player Order: {self.order}, Round Count: {round_count}")
+        print(f"[DEBUG] len(round_state['seats']): {len(round_state['seats'])}, order: {self.order}")
         # Estimate win rate using Monte Carlo
         win_rate = self.estimate_hole_card_win_rate(
             nb_simulation=300,
@@ -106,6 +106,8 @@ class MonteCarloPlayer(BasePokerPlayer):
         return score_ct[small][large] if suited else score_ct[large][small]
 
     def estimate_hole_card_win_rate(self, nb_simulation, nb_player, hole_card, community_card):
+        if community_card is None:
+            community_card = []
         win_count = 0
         for _ in range(nb_simulation):
             win_count += self._simulate_one(nb_player, hole_card, community_card)
