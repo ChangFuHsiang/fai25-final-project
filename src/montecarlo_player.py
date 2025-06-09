@@ -39,6 +39,7 @@ class MonteCarloPlayer(BasePokerPlayer):
         )
 
         # Preflop strategy using simple score table
+        print(f"[PRE-FLOP DEBUG] score: {score}, call_money: {call_money}, pot: {pot_amount}, round_count: {round_count}")
         if len(community_card) == 0:
             score = self.count_score(cards)
             if score >= 25:
@@ -54,16 +55,24 @@ class MonteCarloPlayer(BasePokerPlayer):
 
         # Postflop strategy using win rate
         self.throw += call_money
+        print(f"[DEBUG] win_rate: {win_rate:.2f}, call_money: {call_money}, pot_amount: {round_state['pot']['main']['amount']}, min_raise: {min_raise}, money: {money}")
+
         if win_rate >= 0.8:
+            print("[DEBUG] Decision: Strong Raise (3x)")
             return self.send_action(call_money, min(3 * min_raise, money))
         elif win_rate >= 0.6:
+            print("[DEBUG] Decision: Medium Raise (2x)")
             return self.send_action(call_money, min(2 * min_raise, money))
         elif win_rate >= 0.5:
-            return "call", call_money if call_money <= 80 else ("fold", 0)
+            print(f"[DEBUG] Decision: Conditional Call or Fold (Threshold: 80)")
+            return ("call", call_money) if call_money <= 80 else ("fold", 0)
         elif win_rate >= 0.4:
-            return "call", call_money if call_money <= 40 else ("fold", 0)
+            print(f"[DEBUG] Decision: Conditional Call or Fold (Threshold: 40)")
+            return ("call", call_money) if call_money <= 40 else ("fold", 0)
         else:
-            return "call", 0 if call_money == 0 else ("fold", 0)
+            print("[DEBUG] Decision: Weak hand → Fold unless free call")
+            return ("call", 0) if call_money == 0 else ("fold", 0)
+
 
     def send_action(self, call_money, raise_money):
         if raise_money < 0:
@@ -94,10 +103,6 @@ class MonteCarloPlayer(BasePokerPlayer):
         suited = cards[0].suit == cards[1].suit
         return score_ct[small][large] if suited else score_ct[large][small]
 
-    def receive_round_start_message(self, round_count, hole_card, seats):
-        self.throw = 0
-        self.modify = 0
-
     def estimate_hole_card_win_rate(self, nb_simulation, nb_player, hole_card, community_card):
         win_count = 0
         for _ in range(nb_simulation):
@@ -121,7 +126,6 @@ class MonteCarloPlayer(BasePokerPlayer):
 
     def receive_game_start_message(self, game_info):
         pass
- 
  
     def receive_round_start_message(self, round_count, hole_card, seats):
         self.modify = 0
