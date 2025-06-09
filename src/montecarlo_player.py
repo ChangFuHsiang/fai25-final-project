@@ -109,6 +109,7 @@ class MonteCarloPlayer(BasePokerPlayer):
         win_count = 0
         for _ in range(nb_simulation):
             win_count += self._simulate_one(nb_player, hole_card, community_card)
+            print(f"[DEBUG] Simulation {_ + 1}/{nb_simulation}: Current Win Count: {win_count}")
         return win_count / nb_simulation
 
     def _simulate_one(self, nb_player, hole_card, community_card):
