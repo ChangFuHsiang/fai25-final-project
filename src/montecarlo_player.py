@@ -93,15 +93,24 @@ class MonteCarloPlayer(BasePokerPlayer):
             amount = action_info['amount']
 
         elif 1.3 <= RR < 2.0 and can_raise:
-            action_info = valid_actions[2]  # raise
-            action = action_info['action']
-            amount = action_info['amount']['min'] + 20
-
+            if win_rate > 0.6:
+                action_info = valid_actions[2]  # raise
+                action = action_info['action']
+                amount = action_info['amount']['min'] + 20
+            else:
+                action_info = valid_actions[1]  # call
+                action = action_info['action']
+                amount = action_info['amount']
+                
         else:
-            if win_rate > 0.75 and can_raise:
+            if win_rate > 0.8 and can_raise:
                 action_info = valid_actions[2]  # raise
                 action = action_info['action']
                 amount = 3*action_info['amount']['min']
+            elif win_rate > 0.7 and can_raise:
+                action_info = valid_actions[2]  # raise
+                action = action_info['action']
+                amount = 2*action_info['amount']['min']
             else:
                 action_info = valid_actions[1]  # call
                 action = action_info['action']
