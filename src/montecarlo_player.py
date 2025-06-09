@@ -1,156 +1,123 @@
 from game.players import BasePokerPlayer
 from game.engine.card import Card
 from game.engine.hand_evaluator import HandEvaluator
+from game.engine.deck import Deck
+import math
 import random
-import pprint
 
 class MonteCarloPlayer(BasePokerPlayer):
-    def declare_action(self, valid_actions, hole_card, round_state):
-        # valid_actions  => [fold, call, raise]
+    def __init__(self):
+        self.order = -1  # 0 = first, 1 = second
+        self.throw = 0   # Accumulated money put in this round
+        self.modify = 0  # Check if order is initialized
 
+    def declare_action(self, valid_actions, hole_card, round_state):
+        cards = [Card.from_str(hole_card[0]), Card.from_str(hole_card[1])]
+        community_card = [Card.from_str(c) for c in round_state["community_card"]]
+        round_count = round_state["round_count"]
+        pot_amount = round_state["pot"]["main"]["amount"]
+
+        money = valid_actions[2]["amount"]["max"]
+        min_raise = valid_actions[2]["amount"]["min"]
+        call_money = valid_actions[1]["amount"]
+
+        # Determine player order on preflop
+        if self.modify == 0:
+            last_action = round_state['action_histories']['preflop'][-1]['action']
+            if last_action == 'BIGBLIND':
+                self.order = 0
+            else:
+                self.order = 1
+            self.modify = 1
+
+        # Estimate win rate using Monte Carlo
         win_rate = self.estimate_hole_card_win_rate(
             nb_simulation=300,
             nb_player=len(round_state['seats']),
-            hole_card=hole_card,
-            community_card=round_state["community_card"]
+            hole_card=cards,
+            community_card=community_card
         )
-        print(f"Estimated Win Rate: {win_rate:.2f}")
 
-        # 計算 pot
-        pot = round_state["pot"]["main"]["amount"] + sum(p["amount"] for p in round_state["pot"]["side"])
+        # Preflop strategy using simple score table
+        if len(community_card) == 0:
+            score = self.count_score(cards)
+            if score >= 25:
+                return self.send_action(call_money, min(3 * min_raise, money))
+            elif score >= 23:
+                return self.send_action(call_money, min(2 * min_raise, money))
+            elif score >= 20:
+                return "call", call_money
+            elif score >= 15:
+                return "call", call_money if call_money <= 50 else ("fold", 0)
+            else:
+                return "fold", 0 if call_money > 10 else ("call", call_money)
 
-        # 計算 call_cost
-        street = round_state["street"]
-        action_history = round_state["action_histories"].get(street, [])
-        my_uuid = self.uuid
-
-        max_paid = 0
-        my_paid = 0
-        for act in action_history:
-            if "paid" in act:
-                max_paid = max(max_paid, act["paid"])
-            elif "amount" in act:
-                max_paid = max(max_paid, act["amount"])
-            if act["uuid"] == my_uuid:
-                if "paid" in act:
-                    my_paid += act["paid"]
-                elif "amount" in act:
-                    my_paid += act["amount"]
-
-        call_cost = max(0, max_paid - my_paid)
-
-        print(f"Win Rate: {win_rate:.2f}, Call Cost: {call_cost}, Pot: {pot}")
-
-        if call_cost == 0:
-            pot_odds = 0.0001
+        # Postflop strategy using win rate
+        self.throw += call_money
+        if win_rate >= 0.8:
+            return self.send_action(call_money, min(3 * min_raise, money))
+        elif win_rate >= 0.6:
+            return self.send_action(call_money, min(2 * min_raise, money))
+        elif win_rate >= 0.5:
+            return "call", call_money if call_money <= 80 else ("fold", 0)
+        elif win_rate >= 0.4:
+            return "call", call_money if call_money <= 40 else ("fold", 0)
         else:
-            pot_odds = call_cost / (pot + call_cost)
+            return "call", 0 if call_money == 0 else ("fold", 0)
 
-        RR = win_rate / pot_odds
-        print(f"RR: {RR:.2f} (Win Rate / Pot Odds)")
-        # 合法下注上下限
-        min_raise = valid_actions[2]["amount"]["min"]
-        max_raise = valid_actions[2]["amount"]["max"]
+    def send_action(self, call_money, raise_money):
+        if raise_money < 0:
+            return "call", call_money
+        else:
+            return "raise", raise_money
 
-        # 定義下注離散化集合
-        raise_sizes = [
-            int(pot * 0.25),
-            int(pot * 0.5),
-            int(pot * 0.75),
-            int(pot),          # pot-size bet
-            max_raise          # all-in 通常等於 player stack
+    def count_score(self, cards):
+        score_ct = [
+            [0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13],
+            [1, 30, 23, 22, 22, 22, 19, 19, 19, 20, 23, 25, 25, 25],
+            [2, 20, 20, 13, 12, 10,  7,  7,  8,  9, 10, 10, 10, 10],
+            [3, 18,  0, 20, 13, 12, 10,  7,  8,  9, 10, 10, 10, 10],
+            [4, 17,  0,  0, 20, 13, 12, 10,  9,  9, 10, 10, 10, 10],
+            [5, 14,  0,  0,  0, 20, 13, 12, 10, 10, 10, 10, 10, 10],
+            [6, 10,  0,  0,  0,  0, 20, 15, 11, 10, 10, 10, 10, 10],
+            [7, 10,  0,  0,  0,  0,  0, 20, 15, 11, 11, 11, 12, 13],
+            [8, 10,  0,  0,  0,  0,  0,  7, 21, 15, 12, 12, 14, 13],
+            [9, 10,  0,  0,  0,  0,  0,  7,  8, 23, 20, 20, 15, 15],
+            [10, 17,  0,  0,  0,  0,  7,  7,  8, 11, 25, 23, 20, 20],
+            [11, 19,  0,  0,  0,  7,  8,  8,  8, 10, 11, 25, 23, 20],
+            [12, 24,  0,  0,  6,  7,  8,  8,  8, 10, 11, 11, 25, 23],
+            [13, 25,  0,  6,  7,  8,  9,  9,  9, 10, 11, 11, 11, 26]
         ]
-
-        # 篩選合法的 raise amount（避免超出合法範圍）
-        legal_raise_sizes = [amt for amt in raise_sizes if min_raise <= amt <= max_raise]
-
-
-        action_info = valid_actions[0]  # fold
-        action = action_info['action']
-        amount = action_info['amount']
-
-        if RR < 0.8:
-            if random.random() < 0.15:
-                action_info = valid_actions[2]  # raise
-                action = action_info['action']
-                amount = action_info['amount']['min']
-            else:
-                action_info = valid_actions[0]  # fold
-                action = action_info['action']
-                amount = action_info['amount']
-
-        elif 0.8 <= RR < 1.3:
-            action_info = valid_actions[1]  # call
-            action = action_info['action']
-            amount = action_info['amount']
-
-        elif 1.3 <= RR < 2.0:
-            action_info = valid_actions[2]  # raise
-            action = action_info['action']
-            amount = action_info['amount']['min'] + 20
-
-        else:
-            if win_rate > 0.75:
-                action_info = valid_actions[2]  # raise
-                action = action_info['action']
-                amount = action_info['amount']['max']
-            else:
-                action_info = valid_actions[1]  # call
-                action = action_info['action']
-                amount = action_info['amount']
-
-        print(f"Action: {action}, Amount: {amount}")
-        return action, amount
-
-    def estimate_hole_card_win_rate(self, nb_simulation, nb_player, hole_card, community_card=None):
-        if community_card is None:
-            community_card = []
-        hole_card = self.gen_cards(hole_card)
-        community_card = self.gen_cards(community_card)
-        win_count = sum([
-            self._montecarlo_simulation(nb_player, hole_card, community_card)
-            for _ in range(nb_simulation)
-        ])
-        return 1.0 * win_count / nb_simulation
-
-    def _montecarlo_simulation(self, nb_player, hole_card, community_card):
-        full_community = self._fill_community_card(community_card, hole_card + community_card)
-        unused_cards = self._pick_unused_card((nb_player - 1) * 2, hole_card + full_community)
-        opponents_hole = [unused_cards[2*i:2*i+2] for i in range(nb_player - 1)]
-
-        my_score = HandEvaluator.eval_hand(hole_card, full_community)
-        oppo_scores = [HandEvaluator.eval_hand(h, full_community) for h in opponents_hole]
-        return 1 if my_score >= max(oppo_scores) else 0
-
-    def _fill_community_card(self, base_cards, used_cards):
-        need_num = 5 - len(base_cards)
-        return base_cards + self._pick_unused_card(need_num, used_cards)
-
-    def _pick_unused_card(self, num, used_cards):
-        used_ids = [card.to_id() for card in used_cards]
-        available_ids = [i for i in range(1, 53) if i not in used_ids]
-        chosen = random.sample(available_ids, num)
-        return [Card.from_id(cid) for cid in chosen]
-
-    def gen_cards(self, card_strs):
-        return [Card.from_str(s) for s in card_strs]
-
-    # 以下為作業格式要求的 6 個 callback 函式
-    def receive_game_start_message(self, game_info):
-        pass
+        r1 = cards[0].rank if cards[0].rank != 14 else 1
+        r2 = cards[1].rank if cards[1].rank != 14 else 1
+        small, large = min(r1, r2), max(r1, r2)
+        suited = cards[0].suit == cards[1].suit
+        return score_ct[small][large] if suited else score_ct[large][small]
 
     def receive_round_start_message(self, round_count, hole_card, seats):
-        pass
+        self.throw = 0
+        self.modify = 0
 
-    def receive_street_start_message(self, street, round_state):
-        pass
+    def estimate_hole_card_win_rate(self, nb_simulation, nb_player, hole_card, community_card):
+        win_count = 0
+        for _ in range(nb_simulation):
+            win_count += self._simulate_one(nb_player, hole_card, community_card)
+        return win_count / nb_simulation
 
-    def receive_game_update_message(self, new_action, round_state):
-        pass
+    def _simulate_one(self, nb_player, hole_card, community_card):
+        deck = Deck()
+        used = hole_card + community_card
+        for c in used:
+            deck.cards.remove(c)
+        random.shuffle(deck.cards)
 
-    def receive_round_result_message(self, winners, hand_info, round_state):
-        pass
+        community_needed = 5 - len(community_card)
+        sim_community = community_card + [deck.draw_card() for _ in range(community_needed)]
 
-# 作業格式要求：提供 setup_ai() 供系統調用
+        opp_holes = [[deck.draw_card(), deck.draw_card()] for _ in range(nb_player - 1)]
+        my_score = HandEvaluator.eval_hand(hole_card, sim_community)
+        opp_scores = [HandEvaluator.eval_hand(h, sim_community) for h in opp_holes]
+        return int(my_score >= max(opp_scores))
+
 def setup_ai():
     return MonteCarloPlayer()
