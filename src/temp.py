@@ -101,7 +101,7 @@ class MonteCarloPlayer(BasePokerPlayer):
             if win_rate > 0.75 and can_raise:
                 action_info = valid_actions[2]  # raise
                 action = action_info['action']
-                amount = action_info['amount']['max']
+                amount = 3*action_info['amount']['min']
             else:
                 action_info = valid_actions[1]  # call
                 action = action_info['action']
