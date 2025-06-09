@@ -12,6 +12,7 @@ class MonteCarloPlayer(BasePokerPlayer):
         self.modify = 0  # Check if order is initialized
 
     def declare_action(self, valid_actions, hole_card, round_state):
+        print(f"[DEBUG] Valid Actions: {valid_actions}")
         cards = [Card.from_str(hole_card[0]), Card.from_str(hole_card[1])]
         community_card = [Card.from_str(c) for c in round_state["community_card"]]
         round_count = round_state["round_count"]
@@ -30,6 +31,7 @@ class MonteCarloPlayer(BasePokerPlayer):
                 self.order = 1
             self.modify = 1
 
+        print(f"[DEBUG] Player Order: {self.order}, Round Count: {round_count}")
         # Estimate win rate using Monte Carlo
         win_rate = self.estimate_hole_card_win_rate(
             nb_simulation=300,
