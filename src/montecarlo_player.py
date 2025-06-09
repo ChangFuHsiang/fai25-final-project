@@ -119,5 +119,22 @@ class MonteCarloPlayer(BasePokerPlayer):
         opp_scores = [HandEvaluator.eval_hand(h, sim_community) for h in opp_holes]
         return int(my_score >= max(opp_scores))
 
+    def receive_game_start_message(self, game_info):
+        pass
+ 
+ 
+    def receive_round_start_message(self, round_count, hole_card, seats):
+        self.modify = 0
+        self.throw = 0
+ 
+    def receive_street_start_message(self, street, round_state):
+        pass
+ 
+    def receive_game_update_message(self, new_action, round_state):
+        pass
+ 
+    def receive_round_result_message(self, winners, hand_info, round_state):
+        pass
+
 def setup_ai():
     return MonteCarloPlayer()
