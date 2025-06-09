@@ -124,6 +124,7 @@ class MonteCarloPlayer(BasePokerPlayer):
         opp_holes = [[deck.draw_card(), deck.draw_card()] for _ in range(nb_player - 1)]
         my_score = HandEvaluator.eval_hand(hole_card, sim_community)
         opp_scores = [HandEvaluator.eval_hand(h, sim_community) for h in opp_holes]
+        print(f"[DEBUG] My Score: {my_score}, Opponent Scores: {opp_scores}")
         return int(my_score >= max(opp_scores))
 
     def receive_game_start_message(self, game_info):
