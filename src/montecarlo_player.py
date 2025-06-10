@@ -85,7 +85,8 @@ class MonteCarloPlayer(BasePokerPlayer):
         full_deck = [Card.from_id(i) for i in range(1, 53)]
         print(f"[DEBUG] Full deck: {[str(c) for c in full_deck]}")
         # 過濾掉用過的卡牌
-        unused_cards = [card for card in full_deck if card not in used_cards]
+        # unused_cards = [card for card in full_deck if card not in used_cards]
+        unused_cards = [Card.from_id(i) for i in range(1, 53)]
         print(f"[DEBUG] Unused cards: {[str(c) for c in unused_cards]}")
         chosen = random.sample(unused_cards, num)
         print(f"[DEBUG] Chosen cards: {[str(c) for c in chosen]}")
