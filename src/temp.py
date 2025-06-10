@@ -39,7 +39,9 @@ class MonteCarloPlayer(BasePokerPlayer):
         # 根據 street 做判斷
         street = round_state['street']
         if street == 'preflop':
-            if win_rate >= 0.75:
+            if risk_ratio > 0.3 and win_rate < 0.7:
+                return 'fold', 0
+            elif win_rate >= 0.75:
                 return 'raise', min(2 * min_raise, my_stack)
             elif win_rate >= 0.55:
                 return 'call', call_money
@@ -83,7 +85,7 @@ class MonteCarloPlayer(BasePokerPlayer):
             elif win_rate >= 0.8:
                 return 'raise', 0.6 * my_stack if my_stack > 0 else 0
             elif win_rate >= 0.7:
-                return 'raise', min(4 * min_raise, my_stack)
+                return 'raise', min(5 * min_raise, my_stack)
             elif win_rate >= 0.6:
                 return 'raise', min(2 * min_raise, my_stack)
             elif win_rate >= 0.5:
