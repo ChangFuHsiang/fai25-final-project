@@ -4,6 +4,8 @@ from game.engine.hand_evaluator import HandEvaluator
 import random
 import pprint
 
+#感覺在計算call_cost的部分太麻煩 好像有點問題
+#或許可以在一開始的時候評估手排
 class MonteCarloPlayer(BasePokerPlayer):
     def declare_action(self, valid_actions, hole_card, round_state):
         # valid_actions  => [fold, call, raise]
@@ -93,15 +95,24 @@ class MonteCarloPlayer(BasePokerPlayer):
             amount = action_info['amount']
 
         elif 1.3 <= RR < 2.0 and can_raise:
-            action_info = valid_actions[2]  # raise
-            action = action_info['action']
-            amount = action_info['amount']['min'] + 20
-
-        else:
-            if win_rate > 0.75 and can_raise:
+            if win_rate > 0.6:
                 action_info = valid_actions[2]  # raise
                 action = action_info['action']
-                amount = 3*action_info['amount']['min']
+                amount = action_info['amount']['min'] + 20
+            else:
+                action_info = valid_actions[1]  # call
+                action = action_info['action']
+                amount = action_info['amount']
+                
+        else:
+            if win_rate > 0.8 and can_raise:
+                action_info = valid_actions[2]  # raise
+                action = action_info['action']
+                amount = min(3*action_info['amount']['min'], action_info['amount']['max'])
+            elif win_rate > 0.7 and can_raise:
+                action_info = valid_actions[2]  # raise
+                action = action_info['action']
+                amount = min(2*action_info['amount']['min'], action_info['amount']['max'])
             else:
                 action_info = valid_actions[1]  # call
                 action = action_info['action']
