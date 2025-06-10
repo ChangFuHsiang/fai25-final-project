@@ -1,6 +1,7 @@
 from game.players import BasePokerPlayer
 from game.engine.card import Card
 from game.engine.hand_evaluator import HandEvaluator
+import math
 import random
 
 class MonteCarloPlayer(BasePokerPlayer):
@@ -19,17 +20,21 @@ class MonteCarloPlayer(BasePokerPlayer):
         )
         print(f"[DEBUG] Estimated Win Rate: {win_rate:.2f}")
 
-        # 計算 pot 和剩餘籌碼
-        pot = round_state["pot"]["main"]["amount"] + sum(p["amount"] for p in round_state["pot"]["side"])
+        # pot = round_state["pot"]["main"]["amount"] + sum(p["amount"] for p in round_state["pot"]["side"])
+        round_count = round_state["round_count"]  
         my_stack = [s for s in round_state['seats'] if s['uuid'] == self.uuid][0]['stack']
         call_money = valid_actions[1]["amount"]
+        money = valid_actions[2]["amount"]["max"]
         min_raise = valid_actions[2]['amount']['min']
 
         # 風險比例
         self.throw += call_money
         risk_ratio = max(call_money / (my_stack + call_money), min(3 * min_raise, my_stack) / (my_stack + min(3 * min_raise, my_stack)))
 
+
         print(f"[DEBUG] Street: {round_state['street']}, Win Rate: {win_rate:.2f}, Call: {call_money}, Stack: {my_stack}, Risk Ratio: {risk_ratio:.2f}")
+        if money - math.ceil((21 - round_count) / 2) * 10 - math.floor((21 - round_count) / 2) * 5 > 1000:
+            return valid_actions[0]["action"], valid_actions[0]["amount"]
 
         # 根據 street 做判斷
         street = round_state['street']
