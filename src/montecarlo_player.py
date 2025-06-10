@@ -4,10 +4,10 @@ from game.engine.hand_evaluator import HandEvaluator
 import random
 
 class MonteCarloPlayer(BasePokerPlayer):
-    def __init__(self):
-        self.uuid = None
-        self.stack = 1000  # 預設起始籌碼
-        self.throw = 0     # 每局投入籌碼
+    # def __init__(self):
+    #     self.uuid = None
+    #     self.stack = 1000  # 預設起始籌碼
+    #     self.throw = 0     # 每局投入籌碼
 
     def declare_action(self, valid_actions, hole_card, round_state):
         nb_player = len(round_state['seats'])
@@ -51,7 +51,6 @@ class MonteCarloPlayer(BasePokerPlayer):
         print(f"[DEBUG] Estimating win rate for hole card: {hole_card}, community card: {community_card}, simulations: {nb_simulation}")
         if community_card is None:
             community_card = []
-        win_count = 0
         community_card = self.gen_cards(community_card)
         # print(f"[DEBUG] Community cards after conversion: {community_card}")
         win_count = sum([
@@ -82,7 +81,7 @@ class MonteCarloPlayer(BasePokerPlayer):
 
     def _pick_unused_card(self, num, used_cards):
         print(f"[DEBUG] Picking {num} unused cards from used cards: {used_cards}")
-        used_ids = [Card.to_id(i) for i in used_cards]
+        used_ids = [card.to_id() for card in used_cards]
         print(f"[DEBUG] Used card IDs: {used_ids}")
         available_ids = [i for i in range(1, 53) if i not in used_ids]
         chosen = random.sample(available_ids, num)
