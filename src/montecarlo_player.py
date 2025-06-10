@@ -83,6 +83,7 @@ class MonteCarloPlayer(BasePokerPlayer):
         print(f"[DEBUG] Picking {num} unused cards from used cards: {used_cards}")
         # 產生所有卡牌（共 52 張）
         full_deck = [Card.from_id(i) for i in range(1, 53)]
+        print(f"[DEBUG] Full deck: {[str(c) for c in full_deck]}")
         # 過濾掉用過的卡牌
         unused_cards = [card for card in full_deck if card not in used_cards]
         print(f"[DEBUG] Unused cards: {[str(c) for c in unused_cards]}")
