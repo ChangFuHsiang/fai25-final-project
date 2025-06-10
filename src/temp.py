@@ -17,7 +17,7 @@ class MonteCarloPlayer(BasePokerPlayer):
             hole_card=hole_card,
             community_card=round_state["community_card"]
         )
-        print(f"Estimated Win Rate: {win_rate:.2f}")
+        print(f"[DEBUG] Estimated Win Rate: {win_rate:.2f}")
 
         # 計算 pot 和剩餘籌碼
         pot = round_state["pot"]["main"]["amount"] + sum(p["amount"] for p in round_state["pot"]["side"])
@@ -27,7 +27,7 @@ class MonteCarloPlayer(BasePokerPlayer):
 
         # 風險比例
         self.throw += call_money
-        risk_ratio = call_money / (my_stack + call_money)
+        risk_ratio = max(call_money / (my_stack + call_money), min(3 * min_raise, my_stack) / (my_stack + min(3 * min_raise, my_stack)))
 
         print(f"[DEBUG] Street: {round_state['street']}, Win Rate: {win_rate:.2f}, Call: {call_money}, Stack: {my_stack}, Risk Ratio: {risk_ratio:.2f}")
 
@@ -40,7 +40,7 @@ class MonteCarloPlayer(BasePokerPlayer):
         if street == 'preflop':
             if win_rate >= 0.75:
                 return 'raise', min(2 * min_raise, my_stack)
-            elif win_rate >= 0.5:
+            elif win_rate >= 0.45:
                 return 'call', call_money
             else:
                 return 'fold', 0
@@ -50,16 +50,16 @@ class MonteCarloPlayer(BasePokerPlayer):
                 return 'raise', min(3 * min_raise, my_stack)
             elif win_rate >= 0.7:
                 return 'raise', min(2 * min_raise, my_stack)
-            elif win_rate >= 0.6:
+            elif win_rate >= 0.55:
                 return 'call', call_money
             else:
                 return 'fold', 0
 
         elif street == 'turn':
             if win_rate >= 0.8:
-                return 'raise', min(4 * min_raise, my_stack)
+                return 'raise', 0.5 * my_stack if my_stack > 0 else 0
             elif win_rate >= 0.7:
-                return 'raise', min(3 * min_raise, my_stack)
+                return 'raise', min(4 * min_raise, my_stack)
             elif win_rate >= 0.6:
                 return 'call', call_money
             else:
@@ -67,7 +67,7 @@ class MonteCarloPlayer(BasePokerPlayer):
 
         elif street == 'river':
             if win_rate >= 0.8:
-                return 'raise', min(5 * min_raise, my_stack)
+                return 'raise', 0.6 * my_stack if my_stack > 0 else 0
             elif win_rate >= 0.7:
                 return 'raise', min(4 * min_raise, my_stack)
             elif win_rate >= 0.6:
