@@ -7,6 +7,11 @@ import pprint
 #感覺在計算call_cost的部分太麻煩 好像有點問題
 #或許可以在一開始的時候評估手排
 class MonteCarloPlayer(BasePokerPlayer):
+    def __init__(self):
+        self.uuid = None
+        self.stack = 1000  # 預設起始籌碼
+        self.throw = 0     # 每局投入籌碼
+        
     def declare_action(self, valid_actions, hole_card, round_state):
         # valid_actions  => [fold, call, raise]
 
