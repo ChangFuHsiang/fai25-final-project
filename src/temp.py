@@ -11,10 +11,9 @@ class MonteCarloPlayer(BasePokerPlayer):
         self.uuid = None
         self.stack = 1000  # 預設起始籌碼
         self.throw = 0     # 每局投入籌碼
-        
+
     def declare_action(self, valid_actions, hole_card, round_state):
         # valid_actions  => [fold, call, raise]
-
         win_rate = self.estimate_hole_card_win_rate(
             nb_simulation=300,
             nb_player=len(round_state['seats']),
@@ -25,35 +24,42 @@ class MonteCarloPlayer(BasePokerPlayer):
 
         # 計算 pot
         pot = round_state["pot"]["main"]["amount"] + sum(p["amount"] for p in round_state["pot"]["side"])
+        my_stack = [s for s in round_state['seats'] if s['uuid'] == self.uuid][0]['stack']
 
         # 計算 call_cost
         street = round_state["street"]
         action_history = round_state["action_histories"].get(street, [])
         my_uuid = self.uuid
 
-        max_paid = 0
-        my_paid = 0
-        for act in action_history:
-            if "paid" in act:
-                max_paid = max(max_paid, act["paid"])
-            elif "amount" in act:
-                max_paid = max(max_paid, act["amount"])
-            if act["uuid"] == my_uuid:
-                if "paid" in act:
-                    my_paid += act["paid"]
-                elif "amount" in act:
-                    my_paid += act["amount"]
+        max_paid = max((a['paid'] for a in action_history if 'paid' in a), default=0)
+        my_paid = next((a['paid'] for a in action_history if a.get('uuid') == self.uuid and 'paid' in a), 0)
+        call_cost = max_paid - my_paid
+        min_raise = valid_actions[2]['amount']['min'] if len(valid_actions) > 2 else 0
 
-        call_cost = max(0, max_paid - my_paid)
+        pot_odds = call_cost / (pot + call_cost) if call_cost > 0 else 0.0001
+        RR = win_rate / pot_odds
+
+        # for act in action_history:
+        #     if "paid" in act:
+        #         max_paid = max(max_paid, act["paid"])
+        #     elif "amount" in act:
+        #         max_paid = max(max_paid, act["amount"])
+        #     if act["uuid"] == my_uuid:
+        #         if "paid" in act:
+        #             my_paid += act["paid"]
+        #         elif "amount" in act:
+        #             my_paid += act["amount"]
+
+        # call_cost = max(0, max_paid - my_paid)
 
         print(f"Win Rate: {win_rate:.2f}, Call Cost: {call_cost}, Pot: {pot}")
 
-        if call_cost == 0:
-            pot_odds = 0.0001
-        else:
-            pot_odds = call_cost / (pot + call_cost)
+        # if call_cost == 0:
+        #     pot_odds = 0.0001
+        # else:
+        #     pot_odds = call_cost / (pot + call_cost)
 
-        RR = win_rate / pot_odds
+        # RR = win_rate / pot_odds
         print(f"RR: {RR:.2f} (Win Rate / Pot Odds)")
         # 合法下注上下限
         min_raise = valid_actions[2]["amount"]["min"]
@@ -152,7 +158,7 @@ class MonteCarloPlayer(BasePokerPlayer):
 
     def _pick_unused_card(self, num, used_cards):
         used_ids = [card.to_id() for card in used_cards]
-        print(f"Used card IDs: {used_ids}")
+        # print(f"Used card IDs: {used_ids}")
         available_ids = [i for i in range(1, 53) if i not in used_ids]
         chosen = random.sample(available_ids, num)
         return [Card.from_id(cid) for cid in chosen]
