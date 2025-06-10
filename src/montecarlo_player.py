@@ -53,7 +53,7 @@ class MonteCarloPlayer(BasePokerPlayer):
             community_card = []
         win_count = 0
         community_card = self.gen_cards(community_card)
-        print(f"[DEBUG] Community cards after conversion: {community_card}")
+        # print(f"[DEBUG] Community cards after conversion: {community_card}")
         win_count = sum([
             self._montecarlo_simulation(nb_player, hole_card, community_card)
             for _ in range(nb_simulation)
@@ -62,12 +62,14 @@ class MonteCarloPlayer(BasePokerPlayer):
         return 1.0 * win_count / nb_simulation
     
     def _montecarlo_simulation(self, nb_player, hole_card, community_card):
+        print(f"[DEBUG] Running simulation for {nb_player} players with hole card: {hole_card} and community card: {community_card}")
         full_community = self._fill_community_card(community_card, hole_card + community_card)
         unused_cards = self._pick_unused_card((nb_player - 1) * 2, hole_card + full_community)
         opponents_hole = [unused_cards[2*i:2*i+2] for i in range(nb_player - 1)]
 
         my_score = HandEvaluator.eval_hand(hole_card, full_community)
         oppo_scores = [HandEvaluator.eval_hand(h, full_community) for h in opponents_hole]
+        print(f"[DEBUG] My score: {my_score}, Opponent scores: {oppo_scores}")
         return 1 if my_score >= max(oppo_scores) else 0
     
     def _fill_community_card(self, base_cards, used_cards):
