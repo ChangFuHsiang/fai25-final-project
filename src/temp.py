@@ -149,7 +149,6 @@ class MonteCarloPlayer(BasePokerPlayer):
         used_ids = [card.to_id() for card in used_cards]
         print(f"Used card IDs: {used_ids}")
         available_ids = [i for i in range(1, 53) if i not in used_ids]
-        print(f"Available card IDs: {available_ids}")
         chosen = random.sample(available_ids, num)
         return [Card.from_id(cid) for cid in chosen]
 
