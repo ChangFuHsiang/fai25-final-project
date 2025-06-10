@@ -40,9 +40,9 @@ class MonteCarloPlayer(BasePokerPlayer):
         if street == 'preflop':
             if win_rate >= 0.75:
                 return 'raise', min(2 * min_raise, my_stack)
-            elif win_rate >= 0.5:
+            elif win_rate >= 0.55:
                 return 'call', call_money
-            elif win_rate >= 0.45:
+            elif win_rate >= 0.5:
                 if risk_ratio < 0.2:
                     return 'call', call_money
                 else:
