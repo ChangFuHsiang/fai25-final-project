@@ -1,5 +1,6 @@
 from game.players import BasePokerPlayer
 from game.engine.card import Card
+from game.engine.deck import Deck
 from game.engine.hand_evaluator import HandEvaluator
 import random
 
@@ -80,16 +81,9 @@ class MonteCarloPlayer(BasePokerPlayer):
         return base_cards + self._pick_unused_card(need_num, used_cards)
 
     def _pick_unused_card(self, num, used_cards):
-        print(f"[DEBUG] Picking {num} unused cards from used cards: {used_cards}")
-        # 產生所有卡牌（共 52 張）
-        full_deck = [Card.from_id(i) for i in range(1, 53)]
-        print(f"[DEBUG] Full deck: {[str(c) for c in full_deck]}")
-        # 過濾掉用過的卡牌
-        # unused_cards = [card for card in full_deck if card not in used_cards]
-        unused_cards = [Card.from_id(i) for i in range(1, 53)]
-        print(f"[DEBUG] Unused cards: {[str(c) for c in unused_cards]}")
-        chosen = random.sample(unused_cards, num)
-        print(f"[DEBUG] Chosen cards: {[str(c) for c in chosen]}")
+        used_ids = [card.to_id() for card in used_cards]
+        available_ids = [i for i in range(1, 53) if i not in used_ids]
+        chosen = random.sample(available_ids, num)
         return [Card.from_id(cid) for cid in chosen]
     
     def gen_cards(self, card_strs):
