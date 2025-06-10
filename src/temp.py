@@ -51,7 +51,9 @@ class MonteCarloPlayer(BasePokerPlayer):
                 return 'fold', 0
 
         elif street == 'flop':
-            if win_rate >= 0.8:
+            if risk_ratio > 0.3 and win_rate < 0.7:
+                return 'fold', 0
+            elif win_rate >= 0.8:
                 return 'raise', min(3 * min_raise, my_stack)
             elif win_rate >= 0.7:
                 return 'raise', min(2 * min_raise, my_stack)
@@ -61,7 +63,9 @@ class MonteCarloPlayer(BasePokerPlayer):
                 return 'fold', 0
 
         elif street == 'turn':
-            if win_rate >= 0.8:
+            if risk_ratio > 0.3 and win_rate < 0.65:
+                return 'fold', 0
+            elif win_rate >= 0.8:
                 return 'raise', 0.5 * my_stack if my_stack > 0 else 0
             elif win_rate >= 0.7:
                 return 'raise', min(4 * min_raise, my_stack)
@@ -73,7 +77,9 @@ class MonteCarloPlayer(BasePokerPlayer):
                 return 'fold', 0
 
         elif street == 'river':
-            if win_rate >= 0.8:
+            if risk_ratio > 0.3 and win_rate < 0.6:
+                return 'fold', 0
+            elif win_rate >= 0.8:
                 return 'raise', 0.6 * my_stack if my_stack > 0 else 0
             elif win_rate >= 0.7:
                 return 'raise', min(4 * min_raise, my_stack)
