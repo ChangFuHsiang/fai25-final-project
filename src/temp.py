@@ -31,10 +31,6 @@ class MonteCarloPlayer(BasePokerPlayer):
 
         print(f"[DEBUG] Street: {round_state['street']}, Win Rate: {win_rate:.2f}, Call: {call_money}, Stack: {my_stack}, Risk Ratio: {risk_ratio:.2f}")
 
-        # 若風險過高而勝率太低則 fold
-        if risk_ratio > 0.3 and win_rate < 0.7:
-            return 'fold', 0
-
         # 根據 street 做判斷
         street = round_state['street']
         if street == 'preflop':
