@@ -1,5 +1,4 @@
 from game.players import BasePokerPlayer
-from game.engine.card import Deck
 from game.engine.card import Card
 from game.engine.hand_evaluator import HandEvaluator
 import random
@@ -48,15 +47,18 @@ class MonteCarloPlayer(BasePokerPlayer):
         else:
             return ('call', 0) if call_cost == 0 else ('fold', 0)
 
-    def estimate_hole_card_win_rate(self, nb_simulation, nb_player, hole_card, community_card):
+    def estimate_hole_card_win_rate(self, nb_simulation, nb_player, hole_card, community_card=None):
+        print(f"[DEBUG] Estimating win rate for hole card: {hole_card}, community card: {community_card}, simulations: {nb_simulation}")
         if community_card is None:
             community_card = []
         win_count = 0
         community_card = self.gen_cards(community_card)
+        print(f"[DEBUG] Community cards after conversion: {community_card}")
         win_count = sum([
             self._montecarlo_simulation(nb_player, hole_card, community_card)
             for _ in range(nb_simulation)
         ])
+        print(f"[DEBUG] Total wins in simulations: {win_count} out of {nb_simulation}")
         return 1.0 * win_count / nb_simulation
     
     def _montecarlo_simulation(self, nb_player, hole_card, community_card):
@@ -82,7 +84,7 @@ class MonteCarloPlayer(BasePokerPlayer):
         return [Card.from_str(s) for s in card_strs]    
 
     def receive_game_start_message(self, game_info):
-        self.uuid = game_info['uuid']
+        pass
 
     def receive_round_start_message(self, round_count, hole_card, seats):
         self.throw = 0
