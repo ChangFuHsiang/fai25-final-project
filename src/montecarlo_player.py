@@ -64,8 +64,11 @@ class MonteCarloPlayer(BasePokerPlayer):
     def _montecarlo_simulation(self, nb_player, hole_card, community_card):
         print(f"[DEBUG] Running simulation for {nb_player} players with hole card: {hole_card} and community card: {community_card}")
         full_community = self._fill_community_card(community_card, hole_card + community_card)
+        print(f"[DEBUG] Full community cards after filling: {full_community}")
         unused_cards = self._pick_unused_card((nb_player - 1) * 2, hole_card + full_community)
+        print(f"[DEBUG] Unused cards picked: {unused_cards}")
         opponents_hole = [unused_cards[2*i:2*i+2] for i in range(nb_player - 1)]
+        print(f"[DEBUG] Opponents' hole cards: {opponents_hole}")
 
         my_score = HandEvaluator.eval_hand(hole_card, full_community)
         oppo_scores = [HandEvaluator.eval_hand(h, full_community) for h in opponents_hole]
