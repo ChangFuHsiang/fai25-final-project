@@ -23,7 +23,8 @@ class MonteCarloPlayer(BasePokerPlayer):
         max_paid = max((a['paid'] for a in action_history if 'paid' in a), default=0)
         my_paid = next((a['paid'] for a in action_history if a.get('uuid') == self.uuid and 'paid' in a), 0)
         call_cost = max_paid - my_paid
-        min_raise = valid_actions[2]['amount']['min'] if len(valid_actions) > 2 else 0
+        call_money = valid_actions[1]["amount"]
+        min_raise = valid_actions[2]['amount']['min']
 
         pot_odds = call_cost / (pot + call_cost) if call_cost > 0 else 0.0001
         rr = win_rate / pot_odds
@@ -38,15 +39,21 @@ class MonteCarloPlayer(BasePokerPlayer):
             return 'fold', 0
 
         if win_rate >= 0.8:
-            return 'raise', min(3 * min_raise, my_stack)
-        elif win_rate >= 0.6:
-            return 'raise', min(2 * min_raise, my_stack)
+            if (min_raise < 0):
+                return 'call',call_cost 
+            else:
+                return 'raise', min(3 * min_raise, my_stack)
+        elif win_rate >= 0.7:
+            if (min_raise < 0):
+                return 'call',call_cost
+            else:
+                return 'raise', min(2 * min_raise, my_stack)
         elif win_rate >= 0.5:
-            return ('call', call_cost) if call_cost <= 80 else ('fold', 0)
+            return ('call', call_money) if call_money <= 80 else ('fold', 0)
         elif win_rate >= 0.4:
-            return ('call', call_cost) if call_cost <= 40 else ('fold', 0)
+            return ('call', call_money) if call_money <= 40 else ('fold', 0)
         else:
-            return ('call', 0) if call_cost == 0 else ('fold', 0)
+            return ('call', 0) if call_money == 0 else ('fold', 0)
 
     def estimate_hole_card_win_rate(self, nb_simulation, nb_player, hole_card, community_card=None):
         print(f"[DEBUG] Estimating win rate for hole card: {hole_card}, community card: {community_card}, simulations: {nb_simulation}")

@@ -2,62 +2,83 @@ from game.players import BasePokerPlayer
 from game.engine.card import Card
 from game.engine.hand_evaluator import HandEvaluator
 import random
-import pprint
 
-#感覺在計算call_cost的部分太麻煩 好像有點問題
-#或許可以在一開始的時候評估手排
 class MonteCarloPlayer(BasePokerPlayer):
     def __init__(self):
         self.uuid = None
-        self.stack = 1000  # 預設起始籌碼
-        self.throw = 0     # 每局投入籌碼
+        self.stack = 1000  
+        self.throw = 0     
 
     def declare_action(self, valid_actions, hole_card, round_state):
         # valid_actions  => [fold, call, raise]
         win_rate = self.estimate_hole_card_win_rate(
-            nb_simulation=300,
+            nb_simulation=1000,
             nb_player=len(round_state['seats']),
             hole_card=hole_card,
             community_card=round_state["community_card"]
         )
         print(f"Estimated Win Rate: {win_rate:.2f}")
 
-        # 計算 pot
+        # 計算 pot 和剩餘籌碼
         pot = round_state["pot"]["main"]["amount"] + sum(p["amount"] for p in round_state["pot"]["side"])
         my_stack = [s for s in round_state['seats'] if s['uuid'] == self.uuid][0]['stack']
+        call_money = valid_actions[1]["amount"]
+        min_raise = valid_actions[2]['amount']['min']
 
-        # 計算 call_cost
-        street = round_state["street"]
-        action_history = round_state["action_histories"].get(street, [])
-        my_uuid = self.uuid
+        # 風險比例
+        self.throw += call_money
+        risk_ratio = call_money / (my_stack + call_money)
 
-        max_paid = max((a['paid'] for a in action_history if 'paid' in a), default=0)
-        my_paid = next((a['paid'] for a in action_history if a.get('uuid') == self.uuid and 'paid' in a), 0)
-        call_cost = max_paid - my_paid
-        min_raise = valid_actions[2]['amount']['min'] if len(valid_actions) > 2 else 0
+        print(f"[DEBUG] Street: {round_state['street']}, Win Rate: {win_rate:.2f}, Call: {call_money}, Stack: {my_stack}, Risk Ratio: {risk_ratio:.2f}")
 
-        pot_odds = call_cost / (pot + call_cost) if call_cost > 0 else 0.0001
-        rr = win_rate / pot_odds
-
-        self.throw += call_cost
-        risk_ratio = call_cost / (my_stack + call_cost)  # 計算本次行動佔現有籌碼比例
-
-        print(f"[DEBUG] Win Rate: {win_rate:.2f}, Call Cost: {call_cost}, Pot: {pot}, RR: {rr:.2f}, Risk Ratio: {risk_ratio:.2f}")
-
-        # 新增：若這次行動要投入超過 30% 籌碼，則需勝率 >= 0.7 才考慮行動
+        # 若風險過高而勝率太低則 fold
         if risk_ratio > 0.3 and win_rate < 0.7:
             return 'fold', 0
 
-        if win_rate >= 0.8:
-            return 'raise', min(3 * min_raise, my_stack)
-        elif win_rate >= 0.6:
-            return 'raise', min(2 * min_raise, my_stack)
-        elif win_rate >= 0.5:
-            return ('call', call_cost) if call_cost <= 80 else ('fold', 0)
-        elif win_rate >= 0.4:
-            return ('call', call_cost) if call_cost <= 40 else ('fold', 0)
-        else:
-            return ('call', 0) if call_cost == 0 else ('fold', 0)
+        # 根據 street 做判斷
+        street = round_state['street']
+        if street == 'preflop':
+            if win_rate >= 0.75:
+                return 'raise', min(2 * min_raise, my_stack)
+            elif win_rate >= 0.5:
+                return 'call', call_money
+            else:
+                return 'fold', 0
+
+        elif street == 'flop':
+            if win_rate >= 0.8:
+                return 'raise', min(3 * min_raise, my_stack)
+            elif win_rate >= 0.7:
+                return 'raise', min(2 * min_raise, my_stack)
+            elif win_rate >= 0.6:
+                return 'call', call_money
+            else:
+                return 'fold', 0
+
+        elif street == 'turn':
+            if win_rate >= 0.8:
+                return 'raise', min(4 * min_raise, my_stack)
+            elif win_rate >= 0.7:
+                return 'raise', min(3 * min_raise, my_stack)
+            elif win_rate >= 0.6:
+                return 'call', call_money
+            else:
+                return 'fold', 0
+
+        elif street == 'river':
+            if win_rate >= 0.8:
+                return 'raise', min(5 * min_raise, my_stack)
+            elif win_rate >= 0.7:
+                return 'raise', min(4 * min_raise, my_stack)
+            elif win_rate >= 0.6:
+                return 'raise', min(2 * min_raise, my_stack)
+            elif win_rate >= 0.5:
+                return 'call', call_money
+            else:
+                return 'fold', 0
+
+        return 'fold', 0
+
 
         # for act in action_history:
         #     if "paid" in act:
