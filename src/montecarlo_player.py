@@ -77,12 +77,14 @@ class MonteCarloPlayer(BasePokerPlayer):
     
     def _fill_community_card(self, base_cards, used_cards):
         need_num = 5 - len(base_cards)
+        print(f"[DEBUG] Filling community cards. Base cards: {base_cards}, Need: {need_num} more cards.")
         return base_cards + self._pick_unused_card(need_num, used_cards)
 
     def _pick_unused_card(self, num, used_cards):
         used_ids = [card.to_id() for card in used_cards]
         available_ids = [i for i in range(1, 53) if i not in used_ids]
         chosen = random.sample(available_ids, num)
+        print(f"[DEBUG] Picking {num} unused cards. Used IDs: {used_ids}, Available IDs: {available_ids}, Chosen IDs: {chosen}")
         return [Card.from_id(cid) for cid in chosen]
     
     def gen_cards(self, card_strs):
