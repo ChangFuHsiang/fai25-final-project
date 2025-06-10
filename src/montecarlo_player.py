@@ -81,7 +81,9 @@ class MonteCarloPlayer(BasePokerPlayer):
         return base_cards + self._pick_unused_card(need_num, used_cards)
 
     def _pick_unused_card(self, num, used_cards):
+        print(f"[DEBUG] Picking {num} unused cards from used cards: {used_cards}")
         used_ids = [card.to_id() for card in used_cards]
+        print(f"[DEBUG] Used card IDs: {used_ids}")
         available_ids = [i for i in range(1, 53) if i not in used_ids]
         chosen = random.sample(available_ids, num)
         print(f"[DEBUG] Picking {num} unused cards. Used IDs: {used_ids}, Available IDs: {available_ids}, Chosen IDs: {chosen}")
