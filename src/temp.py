@@ -37,7 +37,27 @@ class MonteCarloPlayer(BasePokerPlayer):
         min_raise = valid_actions[2]['amount']['min'] if len(valid_actions) > 2 else 0
 
         pot_odds = call_cost / (pot + call_cost) if call_cost > 0 else 0.0001
-        RR = win_rate / pot_odds
+        rr = win_rate / pot_odds
+
+        self.throw += call_cost
+        risk_ratio = call_cost / (my_stack + call_cost)  # 計算本次行動佔現有籌碼比例
+
+        print(f"[DEBUG] Win Rate: {win_rate:.2f}, Call Cost: {call_cost}, Pot: {pot}, RR: {rr:.2f}, Risk Ratio: {risk_ratio:.2f}")
+
+        # 新增：若這次行動要投入超過 30% 籌碼，則需勝率 >= 0.7 才考慮行動
+        if risk_ratio > 0.3 and win_rate < 0.7:
+            return 'fold', 0
+
+        if win_rate >= 0.8:
+            return 'raise', min(3 * min_raise, my_stack)
+        elif win_rate >= 0.6:
+            return 'raise', min(2 * min_raise, my_stack)
+        elif win_rate >= 0.5:
+            return ('call', call_cost) if call_cost <= 80 else ('fold', 0)
+        elif win_rate >= 0.4:
+            return ('call', call_cost) if call_cost <= 40 else ('fold', 0)
+        else:
+            return ('call', 0) if call_cost == 0 else ('fold', 0)
 
         # for act in action_history:
         #     if "paid" in act:
@@ -52,7 +72,7 @@ class MonteCarloPlayer(BasePokerPlayer):
 
         # call_cost = max(0, max_paid - my_paid)
 
-        print(f"Win Rate: {win_rate:.2f}, Call Cost: {call_cost}, Pot: {pot}")
+        # print(f"Win Rate: {win_rate:.2f}, Call Cost: {call_cost}, Pot: {pot}")
 
         # if call_cost == 0:
         #     pot_odds = 0.0001
@@ -60,10 +80,10 @@ class MonteCarloPlayer(BasePokerPlayer):
         #     pot_odds = call_cost / (pot + call_cost)
 
         # RR = win_rate / pot_odds
-        print(f"RR: {RR:.2f} (Win Rate / Pot Odds)")
+        # print(f"RR: {RR:.2f} (Win Rate / Pot Odds)")
         # 合法下注上下限
-        min_raise = valid_actions[2]["amount"]["min"]
-        max_raise = valid_actions[2]["amount"]["max"]
+        # min_raise = valid_actions[2]["amount"]["min"]
+        # max_raise = valid_actions[2]["amount"]["max"]
 
         # # 定義下注離散化集合
         # raise_sizes = [
@@ -78,59 +98,59 @@ class MonteCarloPlayer(BasePokerPlayer):
         # legal_raise_sizes = [amt for amt in raise_sizes if min_raise <= amt <= max_raise]
 
         # 檢查 raise 是否可以執行
-        can_raise = (
-            "raise" in [a['action'] for a in valid_actions]
-            and isinstance(valid_actions[2]["amount"], dict)
-            and valid_actions[2]["amount"]["min"] != -1
-            and valid_actions[2]["amount"]["max"] != -1
-            and valid_actions[2]["amount"]["min"] <= valid_actions[2]["amount"]["max"]
-        )
+        # can_raise = (
+        #     "raise" in [a['action'] for a in valid_actions]
+        #     and isinstance(valid_actions[2]["amount"], dict)
+        #     and valid_actions[2]["amount"]["min"] != -1
+        #     and valid_actions[2]["amount"]["max"] != -1
+        #     and valid_actions[2]["amount"]["min"] <= valid_actions[2]["amount"]["max"]
+        # )
 
-        action_info = valid_actions[0]  # fold
-        action = action_info['action']
-        amount = action_info['amount']
+        # action_info = valid_actions[0]  # fold
+        # action = action_info['action']
+        # amount = action_info['amount']
 
-        if RR < 0.8:
-            if can_raise and random.random() < 0.15:
-                action_info = valid_actions[2]  # raise
-                action = action_info['action']
-                amount = action_info['amount']['min']
-            else:
-                action_info = valid_actions[0]  # fold
-                action = action_info['action']
-                amount = action_info['amount']
+        # if RR < 0.8:
+        #     if can_raise and random.random() < 0.15:
+        #         action_info = valid_actions[2]  # raise
+        #         action = action_info['action']
+        #         amount = action_info['amount']['min']
+        #     else:
+        #         action_info = valid_actions[0]  # fold
+        #         action = action_info['action']
+        #         amount = action_info['amount']
 
-        elif 0.8 <= RR < 1.3:
-            action_info = valid_actions[1]  # call
-            action = action_info['action']
-            amount = action_info['amount']
+        # elif 0.8 <= RR < 1.3:
+        #     action_info = valid_actions[1]  # call
+        #     action = action_info['action']
+        #     amount = action_info['amount']
 
-        elif 1.3 <= RR < 2.0 and can_raise:
-            if win_rate > 0.6:
-                action_info = valid_actions[2]  # raise
-                action = action_info['action']
-                amount = action_info['amount']['min'] + 20
-            else:
-                action_info = valid_actions[1]  # call
-                action = action_info['action']
-                amount = action_info['amount']
+        # elif 1.3 <= RR < 2.0 and can_raise:
+        #     if win_rate > 0.6:
+        #         action_info = valid_actions[2]  # raise
+        #         action = action_info['action']
+        #         amount = action_info['amount']['min'] + 20
+        #     else:
+        #         action_info = valid_actions[1]  # call
+        #         action = action_info['action']
+        #         amount = action_info['amount']
                 
-        else:
-            if win_rate > 0.8 and can_raise:
-                action_info = valid_actions[2]  # raise
-                action = action_info['action']
-                amount = min(3*action_info['amount']['min'], action_info['amount']['max'])
-            elif win_rate > 0.7 and can_raise:
-                action_info = valid_actions[2]  # raise
-                action = action_info['action']
-                amount = min(2*action_info['amount']['min'], action_info['amount']['max'])
-            else:
-                action_info = valid_actions[1]  # call
-                action = action_info['action']
-                amount = action_info['amount']
+        # else:
+        #     if win_rate > 0.8 and can_raise:
+        #         action_info = valid_actions[2]  # raise
+        #         action = action_info['action']
+        #         amount = min(3*action_info['amount']['min'], action_info['amount']['max'])
+        #     elif win_rate > 0.7 and can_raise:
+        #         action_info = valid_actions[2]  # raise
+        #         action = action_info['action']
+        #         amount = min(2*action_info['amount']['min'], action_info['amount']['max'])
+        #     else:
+        #         action_info = valid_actions[1]  # call
+        #         action = action_info['action']
+        #         amount = action_info['amount']
 
-        print(f"Action: {action}, Amount: {amount}")
-        return action, amount
+        # print(f"Action: {action}, Amount: {amount}")
+        # return action, amount
 
     def estimate_hole_card_win_rate(self, nb_simulation, nb_player, hole_card, community_card=None):
         if community_card is None:
