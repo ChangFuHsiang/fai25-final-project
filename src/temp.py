@@ -62,7 +62,7 @@ class MonteCarloPlayer(BasePokerPlayer):
                 return 'raise', min(2 * min_raise, my_stack)
             elif win_rate >= 0.55:
                 if call_money <= 10:
-                    return 'call',min(min_raise, my_stack)
+                    return 'raise',min(min_raise, my_stack)
                 else:
                     return 'call', call_money
             else:
@@ -76,9 +76,12 @@ class MonteCarloPlayer(BasePokerPlayer):
             elif win_rate >= 0.7:
                 return 'raise', min(4 * min_raise, my_stack)
             elif win_rate >= 0.6:
-                return 'call', min(3 * min_raise, my_stack)
+                return 'raise', min(3 * min_raise, my_stack)
             elif win_rate >= 0.5:
-                return 'call', min(min_raise, my_stack)
+                if call_money <= 10:
+                    return 'raise', min(min_raise, my_stack)
+                else:
+                    return 'call', call_money
             else:
                 return 'fold', 0
 
@@ -92,7 +95,10 @@ class MonteCarloPlayer(BasePokerPlayer):
             elif win_rate >= 0.6:
                 return 'raise', min(2 * min_raise, my_stack)
             elif win_rate >= 0.5:
-                return 'call', min(min_raise, my_stack) 
+                if call_money <= 10:
+                    return 'raise', min(min_raise, my_stack)
+                else:
+                    return 'call', call_money
             else:
                 return 'fold', 0
 
