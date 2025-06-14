@@ -13,7 +13,7 @@ class MonteCarloPlayer(BasePokerPlayer):
     def declare_action(self, valid_actions, hole_card, round_state):
         # valid_actions  => [fold, call, raise]
         win_rate = self.estimate_hole_card_win_rate(
-            nb_simulation=1000,
+            nb_simulation=5000,
             nb_player=len(round_state['seats']),
             hole_card=hole_card,
             community_card=round_state["community_card"]
