@@ -40,7 +40,10 @@ class MonteCarloPlayer(BasePokerPlayer):
         street = round_state['street']
         if street == 'preflop':
             if win_rate >= 0.75:
-                return 'raise', min(2 * min_raise, my_stack)
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', min(2 * min_raise, my_stack)
             elif win_rate >= 0.55:
                 return 'call', call_money
             elif win_rate >= 0.5:
@@ -60,13 +63,25 @@ class MonteCarloPlayer(BasePokerPlayer):
             if risk_ratio > 0.3 and win_rate < 0.7:
                 return 'fold', 0
             elif win_rate >= 0.9:
-                return 'raise', int(0.8 * my_stack) if my_stack > 0 else 0
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', int(0.8 * my_stack) if my_stack > 0 else 0
             elif win_rate >= 0.85:
-                return 'raise', int(0.7 * my_stack) if my_stack > 0 else 0
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', int(0.7 * my_stack) if my_stack > 0 else 0
             elif win_rate >= 0.8:
-                return 'raise', min(3 * min_raise, my_stack)
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', min(3 * min_raise, my_stack)
             elif win_rate >= 0.7:
-                return 'raise', min(2 * min_raise, my_stack)
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', min(2 * min_raise, my_stack)
             elif win_rate >= 0.45:
                 if call_money <= 10:
                     return 'raise',min(min_raise, my_stack)
@@ -82,11 +97,20 @@ class MonteCarloPlayer(BasePokerPlayer):
             if risk_ratio > 0.3 and win_rate < 0.65:
                 return 'fold', 0
             elif win_rate >= 0.8:
-                return 'raise', int(0.65 * my_stack) if my_stack > 0 else 0
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', int(0.65 * my_stack) if my_stack > 0 else 0
             elif win_rate >= 0.7:
-                return 'raise', min(4 * min_raise, my_stack)
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', min(4 * min_raise, my_stack)
             elif win_rate >= 0.6:
-                return 'raise', min(3 * min_raise, my_stack)
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', min(3 * min_raise, my_stack)
             elif win_rate >= 0.47:
                 if call_money <= 10:
                     return 'raise', min(min_raise, my_stack)
@@ -102,11 +126,20 @@ class MonteCarloPlayer(BasePokerPlayer):
             if risk_ratio > 0.3 and win_rate < 0.6:
                 return 'fold', 0
             elif win_rate >= 0.8:
-                return 'raise', int(0.6 * my_stack) if my_stack > 0 else 0
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', int(0.6 * my_stack) if my_stack > 0 else 0
             elif win_rate >= 0.7:
-                return 'raise', min(5 * min_raise, my_stack)
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', min(5 * min_raise, my_stack)
             elif win_rate >= 0.6:
-                return 'raise', min(2 * min_raise, my_stack)
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', min(2 * min_raise, my_stack)
             elif win_rate >= 0.45:
                 if call_money <= 10:
                     return 'raise', min(min_raise, my_stack)

@@ -13,7 +13,7 @@ class MonteCarloPlayer(BasePokerPlayer):
     def declare_action(self, valid_actions, hole_card, round_state):
         # valid_actions  => [fold, call, raise]
         win_rate = self.estimate_hole_card_win_rate(
-            nb_simulation=1000,
+            nb_simulation=5000,
             nb_player=len(round_state['seats']),
             hole_card=hole_card,
             community_card=round_state["community_card"]
@@ -40,17 +40,20 @@ class MonteCarloPlayer(BasePokerPlayer):
         street = round_state['street']
         if street == 'preflop':
             if win_rate >= 0.75:
-                return self.safe_raise(call_money, my_stack, min_raise, money, 2 * min_raise)
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', min(2 * min_raise, my_stack)
             elif win_rate >= 0.55:
-                return 'call', call_money 
+                return 'call', call_money
             elif win_rate >= 0.5:
                 if risk_ratio < 0.2:
-                    return 'call', call_money 
+                    return 'call', call_money
                 else:
                     return 'fold', 0
             elif win_rate >= 0.4:
                 if call_money <= 20:
-                    return 'call', call_money 
+                    return 'call', call_money
                 else:
                     return 'fold', 0
             else:
@@ -60,60 +63,91 @@ class MonteCarloPlayer(BasePokerPlayer):
             if risk_ratio > 0.3 and win_rate < 0.7:
                 return 'fold', 0
             elif win_rate >= 0.9:
-                return self.safe_raise(call_money, my_stack, min_raise, money, int(0.8 * my_stack))
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', int(0.8 * my_stack) if my_stack > 0 else 0
             elif win_rate >= 0.85:
-                return self.safe_raise(call_money, my_stack, min_raise, money, int(0.7 * my_stack))
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', int(0.7 * my_stack) if my_stack > 0 else 0
             elif win_rate >= 0.8:
-                return self.safe_raise(call_money, my_stack, min_raise, money, 3 * min_raise)
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', min(3 * min_raise, my_stack)
             elif win_rate >= 0.7:
-                return self.safe_raise(call_money, my_stack, min_raise, money, 2 * min_raise)
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', min(2 * min_raise, my_stack)
             elif win_rate >= 0.45:
                 if call_money <= 10:
-                    return self.safe_raise(call_money, my_stack, min_raise, money, min_raise)
+                    return 'raise',min(min_raise, my_stack)
                 else:
-                    return 'call', call_money 
+                    return 'call', call_money
             else:
                 return 'fold', 0
 
         elif street == 'turn':
             if call_money > my_stack and win_rate >= 0.6: 
-                return 'call', my_stack
+                # 我沒辦法完整 call，但可以 all-in
+                return 'call', call_money
             if risk_ratio > 0.3 and win_rate < 0.65:
                 return 'fold', 0
             elif win_rate >= 0.8:
-                return self.safe_raise(call_money, my_stack, min_raise, money, int(0.65 * my_stack))
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', int(0.65 * my_stack) if my_stack > 0 else 0
             elif win_rate >= 0.7:
-                return self.safe_raise(call_money, my_stack, min_raise, money, 4 * min_raise)
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', min(4 * min_raise, my_stack)
             elif win_rate >= 0.6:
-                return self.safe_raise(call_money, my_stack, min_raise, money, 3 * min_raise)
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', min(3 * min_raise, my_stack)
             elif win_rate >= 0.47:
                 if call_money <= 10:
-                    return self.safe_raise(call_money, my_stack, min_raise, money, min_raise)
+                    return 'raise', min(min_raise, my_stack)
                 else:
-                    return 'call', call_money 
-            else:   
+                    return 'call', call_money
+            else:
                 return 'fold', 0
-            
 
         elif street == 'river':
             if call_money > my_stack and win_rate >= 0.6: 
-                return 'call', my_stack
+                # 我沒辦法完整 call，但可以 all-in
+                return 'call', call_money
             if risk_ratio > 0.3 and win_rate < 0.6:
                 return 'fold', 0
             elif win_rate >= 0.8:
-                return self.safe_raise(call_money, my_stack, min_raise, money, int(0.6 * my_stack))
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', int(0.6 * my_stack) if my_stack > 0 else 0
             elif win_rate >= 0.7:
-                return self.safe_raise(call_money, my_stack, min_raise, money, 5 * min_raise)
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', min(5 * min_raise, my_stack)
             elif win_rate >= 0.6:
-                return self.safe_raise(call_money, my_stack, min_raise, money, 2 * min_raise)
+                if my_stack <= min_raise:
+                    return 'call', call_money
+                else:
+                    return 'raise', min(2 * min_raise, my_stack)
             elif win_rate >= 0.45:
                 if call_money <= 10:
-                    return self.safe_raise(call_money, my_stack, min_raise, money, min_raise)
+                    return 'raise', min(min_raise, my_stack)
                 else:
-                    return 'call', call_money 
+                    return 'call', call_money
             else:
                 return 'fold', 0
-            
+
         return 'fold', 0
 
 
@@ -209,25 +243,6 @@ class MonteCarloPlayer(BasePokerPlayer):
 
         # print(f"Action: {action}, Amount: {amount}")
         # return action, amount
-
-    def safe_raise(self, call_money, my_stack, min_raise, max_raise, desired_amount):
-        """ 根據 desired raise amount 檢查是否為合法 raise。
-            若合法，回傳 ('raise', amount)
-            若非法（加注幅度不夠），則視情況 call 或 all-in
-        """
-        # call_money + min_raise 是最小合法 raise 值
-        min_valid_raise = call_money + min_raise
-        legal_raise = max(min_valid_raise, min(desired_amount, max_raise))
-        print(f"[DEBUG] Legal Raise: {legal_raise}, Min Valid Raise: {min_valid_raise}, Desired Amount: {desired_amount}")
-        
-        if legal_raise > my_stack:
-            # 無法合法 raise，就 all-in call
-            return 'call', call_money
-        elif legal_raise <= min_valid_raise:
-            # 無效加注，就直接 call
-            return 'call', call_money 
-        else:
-            return 'raise', legal_raise
 
     def estimate_hole_card_win_rate(self, nb_simulation, nb_player, hole_card, community_card=None):
         if community_card is None:
