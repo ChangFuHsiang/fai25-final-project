@@ -60,7 +60,10 @@ class MonteCarloPlayer(BasePokerPlayer):
                 return 'fold', 0
 
         elif street == 'flop':
-            if risk_ratio > 0.3 and win_rate < 0.7 and call_money > 100:
+            if call_money > my_stack and win_rate >= 0.6 : 
+                # 我沒辦法完整 call，但可以 all-in
+                return 'call', call_money
+            elif risk_ratio > 0.3 and win_rate < 0.7 and call_money > 100:
                 return 'fold', 0
             elif win_rate >= 0.9:
                 if my_stack <= min_raise:
