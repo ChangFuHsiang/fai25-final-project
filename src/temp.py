@@ -13,7 +13,7 @@ class MonteCarloPlayer(BasePokerPlayer):
     def declare_action(self, valid_actions, hole_card, round_state):
         # valid_actions  => [fold, call, raise]
         win_rate = self.estimate_hole_card_win_rate(
-            nb_simulation=5000,
+            nb_simulation=1000,
             nb_player=len(round_state['seats']),
             hole_card=hole_card,
             community_card=round_state["community_card"]
@@ -42,15 +42,15 @@ class MonteCarloPlayer(BasePokerPlayer):
             if win_rate >= 0.75:
                 return self.safe_raise(call_money, my_stack, min_raise, money, 2 * min_raise)
             elif win_rate >= 0.55:
-                return 'call', call_money if call_money <= my_stack else my_stack
+                return 'call', call_money 
             elif win_rate >= 0.5:
                 if risk_ratio < 0.2:
-                    return 'call', call_money if call_money <= my_stack else my_stack
+                    return 'call', call_money 
                 else:
                     return 'fold', 0
             elif win_rate >= 0.4:
                 if call_money <= 20:
-                    return 'call', call_money if call_money <= my_stack else my_stack
+                    return 'call', call_money 
                 else:
                     return 'fold', 0
             else:
@@ -71,7 +71,7 @@ class MonteCarloPlayer(BasePokerPlayer):
                 if call_money <= 10:
                     return self.safe_raise(call_money, my_stack, min_raise, money, min_raise)
                 else:
-                    return 'call', call_money if call_money <= my_stack else my_stack
+                    return 'call', call_money 
             else:
                 return 'fold', 0
 
@@ -90,7 +90,7 @@ class MonteCarloPlayer(BasePokerPlayer):
                 if call_money <= 10:
                     return self.safe_raise(call_money, my_stack, min_raise, money, min_raise)
                 else:
-                    return 'call', call_money if call_money <= my_stack else my_stack
+                    return 'call', call_money 
             else:   
                 return 'fold', 0
             
@@ -110,7 +110,7 @@ class MonteCarloPlayer(BasePokerPlayer):
                 if call_money <= 10:
                     return self.safe_raise(call_money, my_stack, min_raise, money, min_raise)
                 else:
-                    return 'call', call_money if call_money <= my_stack else my_stack
+                    return 'call', call_money 
             else:
                 return 'fold', 0
             
@@ -218,13 +218,14 @@ class MonteCarloPlayer(BasePokerPlayer):
         # call_money + min_raise 是最小合法 raise 值
         min_valid_raise = call_money + min_raise
         legal_raise = max(min_valid_raise, min(desired_amount, max_raise))
+        print(f"[DEBUG] Legal Raise: {legal_raise}, Min Valid Raise: {min_valid_raise}, Desired Amount: {desired_amount}")
         
         if legal_raise > my_stack:
             # 無法合法 raise，就 all-in call
-            return 'call', my_stack
+            return 'call', call_money
         elif legal_raise < min_valid_raise:
             # 無效加注，就直接 call
-            return 'call', call_money if call_money <= my_stack else my_stack
+            return 'call', call_money 
         else:
             return 'raise', legal_raise
 
