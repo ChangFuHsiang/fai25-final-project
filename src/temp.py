@@ -223,7 +223,7 @@ class MonteCarloPlayer(BasePokerPlayer):
         if legal_raise > my_stack:
             # 無法合法 raise，就 all-in call
             return 'call', call_money
-        elif legal_raise < min_valid_raise:
+        elif legal_raise <= min_valid_raise:
             # 無效加注，就直接 call
             return 'call', call_money 
         else:
